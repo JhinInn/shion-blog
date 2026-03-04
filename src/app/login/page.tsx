@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,16 +29,14 @@ export default function LoginPage() {
 
       if (res.ok) {
         setSuccess(true);
-        // 显示成功消息后跳转
-        setTimeout(() => {
-          router.push("/admin");
-        }, 1500);
+        // 直接跳转，不用延时
+        window.location.href = "/admin";
       } else {
         setError("用户名或密码错误");
+        setLoading(false);
       }
     } catch (err) {
       setError("登录失败，请重试");
-    } finally {
       setLoading(false);
     }
   }
@@ -50,9 +46,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">管理员登录</CardTitle>
-          <CardDescription>
-            请输入账号密码进入控制台
-          </CardDescription>
+          <CardDescription>请输入账号密码进入控制台</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,11 +89,7 @@ export default function LoginPage() {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={loading || success}
-            >
+            <Button type="submit" className="w-full" disabled={loading || success}>
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
