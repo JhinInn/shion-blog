@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, FileText, MessageSquare, Loader2, Settings, AlertCircle } from "lucide-react";
+import { Plus, Trash2, FileText, MessageSquare, Loader2, Settings, LogOut } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,7 +70,7 @@ export default function AdminPage() {
     fetchData();
   }, []);
 
-  async function fetchData() {
+  async function handleLogout() { await fetch("/api/logout", { method: "POST" }); router.push("/login"); router.refresh(); } async function fetchData() {
     try {
       const [postsRes, momentsRes] = await Promise.all([
         fetch("/api/posts"),
@@ -191,7 +191,7 @@ export default function AdminPage() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">控制台</h1>
+            <div className="flex items-center justify-between mb-2"><h1 className="text-3xl font-bold">控制台</h1><Button variant="outline" size="sm" onClick={handleLogout} className="gap-2"><LogOut className="w-4 h-4" />退出登录</Button></div>
             <p className="text-muted-foreground">管理你的文章和动态</p>
           </div>
 
