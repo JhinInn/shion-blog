@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     const post = await prisma.post.create({
       data: {
         title,
-        description,
-        content,
+        description: description || "",
+        content: content || "",
         category,
         tags: JSON.stringify(tags || []),
         readTime: readTime || "5 min",
