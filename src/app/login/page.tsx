@@ -6,18 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess(false);
     setLoading(true);
 
     try {
@@ -28,8 +30,11 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        router.push("/admin");
-        router.refresh();
+        setSuccess(true);
+        // 显示成功消息后跳转
+        setTimeout(() => {
+          router.push("/admin");
+        }, 1500);
       } else {
         setError("用户名或密码错误");
       }
@@ -56,6 +61,13 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
+
+            {success && (
+              <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                登录成功！正在跳转...
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="username">用户名</Label>
@@ -66,6 +78,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="输入用户名"
                 required
+                disabled={success}
               />
             </div>
 
@@ -78,14 +91,24 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="输入密码"
                 required
+                disabled={success}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={loading || success}
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   登录中...
+                </>
+              ) : success ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  登录成功
                 </>
               ) : (
                 "登录"
