@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -24,6 +24,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+// 动态导入 Markdown 编辑器（避免 SSR 问题）
+const MDEditor = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default),
+  { ssr: false }
+);
 
 const categories = [
   { id: "tech", name: "技术博客" },
@@ -55,7 +61,6 @@ interface AboutData {
 }
 
 export default function AdminPage() {
-  const router = useRouter();
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -123,8 +128,7 @@ export default function AdminPage() {
 
   async function handleLogout() { 
     await fetch("/api/logout", { method: "POST" }); 
-    router.push("/"); 
-    router.refresh(); 
+    window.location.href = "/"; 
   }
 
   const addTag = () => {
@@ -266,7 +270,7 @@ export default function AdminPage() {
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl font-bold">控制台</h1>
             <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
@@ -300,7 +304,7 @@ export default function AdminPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>发布新文章</CardTitle>
-                    <CardDescription>填写文章信息并发布</CardDescription>
+                    <CardDescription>支持 Markdown 格式</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
@@ -342,14 +346,15 @@ export default function AdminPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="content">正文内容</Label>
-                      <Textarea 
-                        id="content" 
-                        placeholder="开始写作..."
-                        rows={10}
-                        value={postForm.content}
-                        onChange={e => setPostForm({...postForm, content: e.target.value})}
-                      />
+                      <Label>正文内容（支持 Markdown）</Label>
+                      <div data-color-mode="light">
+                        <MDEditor
+                          value={postForm.content}
+                          onChange={(value) => setPostForm({...postForm, content: value || ""})}
+                          height={400}
+                          preview="edit"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">

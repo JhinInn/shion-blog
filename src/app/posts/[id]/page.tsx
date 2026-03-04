@@ -1,15 +1,31 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
+// 动态导入 Markdown 渲染器
+const MDEditor = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown),
+  { ssr: false }
+);
+
+interface Post {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  tags: string;
+  readTime: string;
+  createdAt: string;
 }
 
 const categories: Record<string, string> = {
@@ -18,15 +34,61 @@ const categories: Record<string, string> = {
   tools: "工具分享",
 };
 
-export default async function PostPage({ params }: PageProps) {
-  const { id } = await params;
-  
-  const post = await prisma.post.findUnique({
-    where: { id },
-  });
+export default function PostPage() {
+  const params = useParams();
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!post) {
-    notFound();
+  useEffect(() => {
+    if (params.id) {
+      fetchPost();
+    }
+  }, [params.id]);
+
+  async function fetchPost() {
+    try {
+      const res = await fetch(`/api/posts/${params.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPost(data);
+      } else {
+        setError("文章不存在");
+      }
+    } catch (err) {
+      setError("加载失败");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="max-w-3xl mx-auto text-center py-12">
+            <p className="text-muted-foreground">{error || "文章不存在"}</p>
+            <Button variant="outline" className="mt-4" asChild>
+              <Link href="/posts">返回文章列表</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const tags = JSON.parse(post.tags || "[]");
@@ -63,16 +125,8 @@ export default async function PostPage({ params }: PageProps) {
 
             <Card>
               <CardContent className="p-6 md:p-8">
-                <div className="prose prose-slate dark:prose-invert max-w-none">
-                  {post.content ? (
-                    post.content.split("\n").map((paragraph, index) => (
-                      <p key={index} className="mb-4 leading-relaxed">
-                        {paragraph}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">暂无正文内容</p>
-                  )}
+                <div data-color-mode="light" className="prose prose-slate max-w-none">
+                  <MDEditor source={post.content} />
                 </div>
               </CardContent>
             </Card>
