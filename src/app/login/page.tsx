@@ -29,8 +29,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         setSuccess(true);
-        // 直接跳转，不用延时
-        window.location.href = "/admin";
+        window.location.href = "/shion-control-panel";
       } else {
         setError("用户名或密码错误");
         setLoading(false);

@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { PenLine } from "lucide-react";
 
 export function Header() {
   return (
@@ -26,12 +24,7 @@ export function Header() {
           <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
             关于
           </Link>
-          <Button size="sm" className="gap-2" asChild>
-            <Link href="/admin">
-              <PenLine className="w-4 h-4" />
-              控制台
-            </Link>
-          </Button>
+          {/* 控制台入口已隐藏，直接访问 /shion-control-panel */}
         </nav>
       </div>
     </header>
