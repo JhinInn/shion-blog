@@ -29,7 +29,7 @@ export function Header() {
           <Button size="sm" className="gap-2" asChild>
             <Link href="/admin">
               <PenLine className="w-4 h-4" />
-              写文章
+              控制台
             </Link>
           </Button>
         </nav>
