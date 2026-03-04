@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, FileText, MessageSquare, Loader2, Settings, LogOut } from "lucide-react";
+import { Plus, Trash2, FileText, MessageSquare, Loader2, Settings, LogOut, User } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +44,16 @@ interface Moment {
   createdAt: string;
 }
 
+interface AboutData {
+  name: string;
+  title: string;
+  bio: string;
+  location: string;
+  github: string;
+  tags: string[];
+  avatar: string;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [tags, setTags] = useState<string[]>([]);
@@ -52,6 +62,19 @@ export default function AdminPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [moments, setMoments] = useState<Moment[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // About 编辑
+  const [about, setAbout] = useState<AboutData>({
+    name: "",
+    title: "",
+    bio: "",
+    location: "",
+    github: "",
+    tags: [],
+    avatar: "",
+  });
+  const [aboutTags, setAboutTags] = useState<string[]>([]);
+  const [newAboutTag, setNewAboutTag] = useState("");
   
   // 文章表单
   const [postForm, setPostForm] = useState({
@@ -65,12 +88,12 @@ export default function AdminPage() {
   // 动态表单
   const [momentContent, setMomentContent] = useState("");
 
-  // 加载已有内容
   useEffect(() => {
     fetchData();
+    fetchAbout();
   }, []);
 
-  async function handleLogout() { await fetch("/api/logout", { method: "POST" }); router.push("/login"); router.refresh(); } async function fetchData() {
+  async function fetchData() {
     try {
       const [postsRes, momentsRes] = await Promise.all([
         fetch("/api/posts"),
@@ -87,6 +110,23 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchAbout() {
+    try {
+      const res = await fetch("/api/about");
+      const data = await res.json();
+      setAbout(data);
+      setAboutTags(data.tags || []);
+    } catch (error) {
+      console.error("Failed to fetch about:", error);
+    }
+  }
+
+  async function handleLogout() { 
+    await fetch("/api/logout", { method: "POST" }); 
+    router.push("/login"); 
+    router.refresh(); 
+  }
+
   const addTag = () => {
     if (newTag && !tags.includes(newTag)) {
       setTags([...tags, newTag]);
@@ -96,6 +136,17 @@ export default function AdminPage() {
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const addAboutTag = () => {
+    if (newAboutTag && !aboutTags.includes(newAboutTag)) {
+      setAboutTags([...aboutTags, newAboutTag]);
+      setNewAboutTag("");
+    }
+  };
+
+  const removeAboutTag = (tagToRemove: string) => {
+    setAboutTags(aboutTags.filter(tag => tag !== tagToRemove));
   };
 
   async function handleSubmitPost(e: React.FormEvent) {
@@ -156,6 +207,32 @@ export default function AdminPage() {
     }
   }
 
+  async function handleSaveAbout(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/about", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...about,
+          tags: aboutTags,
+        }),
+      });
+      
+      if (res.ok) {
+        alert("关于页面更新成功！");
+      } else {
+        alert("保存失败");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("保存出错");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function deletePost(id: string) {
     try {
       const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
@@ -190,13 +267,15 @@ export default function AdminPage() {
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2"><h1 className="text-3xl font-bold">控制台</h1><Button variant="outline" size="sm" onClick={handleLogout} className="gap-2"><LogOut className="w-4 h-4" />退出登录</Button></div>
-            <p className="text-muted-foreground">管理你的文章和动态</p>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold">控制台</h1>
+            <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+              <LogOut className="w-4 h-4" />退出登录
+            </Button>
           </div>
 
           <Tabs defaultValue="post" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="post" className="gap-2">
                 <FileText className="w-4 h-4" />
                 写文章
@@ -205,12 +284,17 @@ export default function AdminPage() {
                 <MessageSquare className="w-4 h-4" />
                 发动态
               </TabsTrigger>
+              <TabsTrigger value="about" className="gap-2">
+                <User className="w-4 h-4" />
+                编辑关于
+              </TabsTrigger>
               <TabsTrigger value="manage" className="gap-2">
                 <Settings className="w-4 h-4" />
                 管理
               </TabsTrigger>
             </TabsList>
 
+            {/* 写文章 */}
             <TabsContent value="post">
               <form onSubmit={handleSubmitPost}>
                 <Card>
@@ -314,6 +398,7 @@ export default function AdminPage() {
               </form>
             </TabsContent>
 
+            {/* 发动态 */}
             <TabsContent value="moment">
               <form onSubmit={handleSubmitMoment}>
                 <Card>
@@ -351,6 +436,124 @@ export default function AdminPage() {
               </form>
             </TabsContent>
 
+            {/* 编辑关于 */}
+            <TabsContent value="about">
+              <form onSubmit={handleSaveAbout}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>编辑关于页面</CardTitle>
+                    <CardDescription>自定义你的个人介绍</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="about-name">名字</Label>
+                      <Input 
+                        id="about-name" 
+                        value={about.name}
+                        onChange={e => setAbout({...about, name: e.target.value})}
+                        placeholder="你的名字"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="about-title">头衔</Label>
+                      <Input 
+                        id="about-title" 
+                        value={about.title}
+                        onChange={e => setAbout({...about, title: e.target.value})}
+                        placeholder="例如：测试开发工程师"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="about-avatar">头像 URL</Label>
+                      <Input 
+                        id="about-avatar" 
+                        value={about.avatar}
+                        onChange={e => setAbout({...about, avatar: e.target.value})}
+                        placeholder="图片链接"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="about-bio">个人简介</Label>
+                      <Textarea 
+                        id="about-bio" 
+                        rows={6}
+                        value={about.bio}
+                        onChange={e => setAbout({...about, bio: e.target.value})}
+                        placeholder="介绍你自己...（用换行分隔段落）"
+                      />
+                      <p className="text-xs text-muted-foreground">用换行分隔段落</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="about-location">位置</Label>
+                      <Input 
+                        id="about-location" 
+                        value={about.location}
+                        onChange={e => setAbout({...about, location: e.target.value})}
+                        placeholder="你所在的城市"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="about-github">GitHub 链接</Label>
+                      <Input 
+                        id="about-github" 
+                        value={about.github}
+                        onChange={e => setAbout({...about, github: e.target.value})}
+                        placeholder="https://github.com/..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>技能标签</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={newAboutTag}
+                          onChange={(e) => setNewAboutTag(e.target.value)}
+                          placeholder="添加标签..."
+                          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addAboutTag())}
+                        />
+                        <Button type="button" variant="outline" onClick={addAboutTag}>
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="flex gap-2 flex-wrap mt-2">
+                        {aboutTags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                            {tag}
+                            <button 
+                              type="button"
+                              onClick={() => removeAboutTag(tag)}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={submitting}
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          保存中...
+                        </>
+                      ) : "保存更改"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </form>
+            </TabsContent>
+
+            {/* 管理 */}
             <TabsContent value="manage">
               <div className="space-y-6">
                 {/* 文章管理 */}

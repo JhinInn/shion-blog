@@ -1,0 +1,9 @@
+{
+  "name": "Shion",
+  "title": "测试开发工程师 | 热爱自动化测试与工具开发",
+  "bio": "你好！我是 Shion，一名热爱技术的测试开发工程师。\\n\\n日常工作是编写自动化测试用例、分析 PRD 文档、完善测试体系。\\n\\n这个博客是我记录技术思考、分享工具心得的地方。希望能通过文字认识更多志同道合的朋友。",
+  "location": "中国",
+  "github": "https://github.com/JhinInn",
+  "tags": ["Python", "Java", "自动化测试", "Next.js", "Playwright"],
+  "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=shion"
+}
