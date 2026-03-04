@@ -12,16 +12,23 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(posts);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching posts:", error);
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log("Creating post:", body);
+
     const { title, description, content, category, tags, readTime } = body;
+
+    // 验证必填字段
+    if (!title || !category) {
+      return NextResponse.json({ error: "Title and category are required" }, { status: 400 });
+    }
 
     const post = await prisma.post.create({
       data: {
@@ -36,8 +43,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(post, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating post:", error);
-    return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to create post" }, { status: 500 });
   }
 }
