@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(posts);
   } catch (error: any) {
-    console.error("Error fetching posts:", error);
+    console.error("[Posts API] Error fetching posts:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log("Creating post:", body);
+    console.log("[Posts API] Creating post:", body);
 
     const { title, description, content, category, tags, readTime } = body;
 
@@ -30,21 +30,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title and category are required" }, { status: 400 });
     }
 
+    console.log("[Posts API] Connecting to database...");
     const post = await prisma.post.create({
       data: {
-        title,
-        description: description || "",
-        content: content || "",
-        category,
+        title: title.trim(),
+        description: description?.trim() || "",
+        content: content?.trim() || "",
+        category: category.trim(),
         tags: JSON.stringify(tags || []),
         readTime: readTime || "5 min",
         published: true,
       },
     });
+    console.log("[Posts API] Created post:", post);
 
     return NextResponse.json(post, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating post:", error);
-    return NextResponse.json({ error: error.message || "Failed to create post" }, { status: 500 });
+    console.error("[Posts API] Error creating post:", error);
+    return NextResponse.json({ 
+      error: "Failed to create post",
+      details: error.message,
+      code: error.code 
+    }, { status: 500 });
   }
 }
