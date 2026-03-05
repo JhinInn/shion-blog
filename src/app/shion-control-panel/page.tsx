@@ -106,12 +106,28 @@ export default function AdminPage() {
         fetch("/api/posts"),
         fetch("/api/moments"),
       ]);
-      const postsData = await postsRes.json();
-      const momentsData = await momentsRes.json();
-      setPosts(postsData);
-      setMoments(momentsData);
+      
+      // 检查响应是否成功
+      if (postsRes.ok) {
+        const postsData = await postsRes.json();
+        // 确保返回的是数组（防止错误对象被设置）
+        setPosts(Array.isArray(postsData) ? postsData : []);
+      } else {
+        console.error("Failed to fetch posts:", await postsRes.text());
+        setPosts([]);
+      }
+      
+      if (momentsRes.ok) {
+        const momentsData = await momentsRes.json();
+        setMoments(Array.isArray(momentsData) ? momentsData : []);
+      } else {
+        console.error("Failed to fetch moments:", await momentsRes.text());
+        setMoments([]);
+      }
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      setPosts([]);
+      setMoments([]);
     } finally {
       setLoading(false);
     }
