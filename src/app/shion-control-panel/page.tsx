@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, FileText, MessageSquare, Loader2, Settings, LogOut, User } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, Trash2, FileText, MessageSquare, Loader2, Settings, LogOut, User, AlertCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +68,7 @@ export default function AdminPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [moments, setMoments] = useState<Moment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // About 编辑
   const [about, setAbout] = useState<AboutData>({
@@ -158,6 +160,7 @@ export default function AdminPage() {
     if (!postForm.title || !postForm.category) return;
     
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/posts", {
         method: "POST",
@@ -168,17 +171,18 @@ export default function AdminPage() {
         }),
       });
       
+      const data = await res.json();
+      
       if (res.ok) {
         alert("文章发布成功！");
         setPostForm({ title: "", category: "", description: "", content: "", readTime: "5 min" });
         setTags([]);
         fetchData();
       } else {
-        alert("发布失败");
+        setError(data.details || data.error || "发布失败");
       }
-    } catch (error) {
-      console.error(error);
-      alert("发布出错");
+    } catch (err: any) {
+      setError(err.message || "发布出错");
     } finally {
       setSubmitting(false);
     }
@@ -189,6 +193,7 @@ export default function AdminPage() {
     if (!momentContent.trim()) return;
     
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/moments", {
         method: "POST",
@@ -196,16 +201,17 @@ export default function AdminPage() {
         body: JSON.stringify({ content: momentContent }),
       });
       
+      const data = await res.json();
+      
       if (res.ok) {
         alert("动态发布成功！");
         setMomentContent("");
         fetchData();
       } else {
-        alert("发布失败");
+        setError(data.details || data.error || "发布失败");
       }
-    } catch (error) {
-      console.error(error);
-      alert("发布出错");
+    } catch (err: any) {
+      setError(err.message || "发布出错");
     } finally {
       setSubmitting(false);
     }
@@ -214,6 +220,7 @@ export default function AdminPage() {
   async function handleSaveAbout(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/about", {
         method: "PUT",
@@ -227,11 +234,11 @@ export default function AdminPage() {
       if (res.ok) {
         alert("关于页面更新成功！");
       } else {
-        alert("保存失败");
+        const data = await res.json();
+        setError(data.details || data.error || "保存失败");
       }
-    } catch (error) {
-      console.error(error);
-      alert("保存出错");
+    } catch (err: any) {
+      setError(err.message || "保存出错");
     } finally {
       setSubmitting(false);
     }
@@ -239,7 +246,7 @@ export default function AdminPage() {
 
   async function deletePost(id: string) {
     try {
-      const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
+      const res = await fetch(\`/api/posts/\${id}\`, { method: "DELETE" });
       if (res.ok) {
         setPosts(posts.filter(p => p.id !== id));
       } else {
@@ -253,7 +260,7 @@ export default function AdminPage() {
 
   async function deleteMoment(id: string) {
     try {
-      const res = await fetch(`/api/moments/${id}`, { method: "DELETE" });
+      const res = await fetch(\`/api/moments/\${id}\`, { method: "DELETE" });
       if (res.ok) {
         setMoments(moments.filter(m => m.id !== id));
       } else {
@@ -277,6 +284,13 @@ export default function AdminPage() {
               <LogOut className="w-4 h-4" />退出登录
             </Button>
           </div>
+
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
           <Tabs defaultValue="post" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
@@ -578,7 +592,7 @@ export default function AdminPage() {
                           <div key={post.id} className="flex items-center justify-between p-3 border rounded-lg">
                             <div className="flex-1 min-w-0">
                               <Link 
-                                href={`/posts/${post.id}`} 
+                                href={\`/posts/\${post.id}\`} 
                                 className="font-medium hover:text-primary truncate block"
                               >
                                 {post.title}
@@ -596,9 +610,9 @@ export default function AdminPage() {
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>确认删除</AlertDialogTitle>
-                                  <AlertDialogDescription>
+                                  <AlertDescription>
                                     确定要删除文章「{post.title}」吗？此操作无法撤销。
-                                  </AlertDialogDescription>
+                                  </AlertDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>取消</AlertDialogCancel>
@@ -648,9 +662,9 @@ export default function AdminPage() {
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>确认删除</AlertDialogTitle>
-                                  <AlertDialogDescription>
+                                  <AlertDescription>
                                     确定要删除这条动态吗？此操作无法撤销。
-                                  </AlertDialogDescription>
+                                  </AlertDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>取消</AlertDialogCancel>
